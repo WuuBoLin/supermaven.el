@@ -1,0 +1,213 @@
+#+TITLE: Supermaven.el
+#+AUTHOR: WuuBoLin
+
+An AI-powered code completion plugin for Emacs, based on [[https://github.com/crazywolf132/supermaven.el][crazywolf132's Supermaven.el]]. This is a port of the official [[https://github.com/supermaven-inc/supermaven-nvim][Supermaven Neovim plugin]].
+
+* Requirements
+
+- Emacs 27.1 or later
+- Internet connection
+- Write access to user data directory (~/.local/share~ or ~$XDG_DATA_HOME~)
+- JSON support (included with Emacs 27.1+)
+
+* Installation
+
+** Manual Installation
+
+1. Clone the repository:
+   #+begin_src bash
+   git clone https://github.com/WuuBoLin/supermaven.el.git ~/.config/emacs/supermaven
+   #+end_src
+
+2. Add to your Emacs configuration:
+   #+begin_src elisp
+   (add-to-list 'load-path "~/.config/emacs/supermaven")
+   (require 'supermaven)
+   (add-hook 'prog-mode-hook 'supermaven-mode)
+   #+end_src
+
+** Using ~use-package~
+
+#+begin_src elisp
+(use-package supermaven
+  :ensure (:type git :host github :repo "WuuBoLin/supermaven.el")
+  :hook (prog-mode . supermaven-mode)
+  :config
+  (setq supermaven-auto-start t
+        supermaven-log-level 'info
+        supermaven-idle-delay 0.1)
+  :bind (:map supermaven-completion-map
+              ("TAB" . supermaven-accept-completion)
+              ("C-j" . supermaven-accept-completion-by-word)
+              ("C-g" . supermaven-dismiss-completion)))
+#+end_src
+
+** DOOM Emacs
+
+Add to ~~/.doom.d/packages.el~:
+#+begin_src elisp
+(package! supermaven
+  :recipe (:host github :repo "WuuBoLin/supermaven.el"))
+#+end_src
+
+Add to ~~/.doom.d/config.el~:
+#+begin_src elisp
+(use-package! supermaven
+  :hook (prog-mode . supermaven-mode))
+#+end_src
+
+Run ~doom sync~ to install.
+
+** Spacemacs
+
+Add to your ~~/.spacemacs~ configuration:
+#+begin_src elisp
+(defun dotspacemacs/layers ()
+  (setq-default
+   dotspacemacs-additional-packages
+   '((supermaven :location (recipe :fetcher github
+                                  :repo "WuuBoLin/supermaven.el")))))
+
+(defun dotspacemacs/user-config ()
+  (require 'supermaven)
+  (add-hook 'prog-mode-hook 'supermaven-mode))
+#+end_src
+
+* Usage
+
+** Basic Setup
+
+Enable Supermaven mode in programming buffers:
+#+begin_src elisp
+;; For all programming modes
+(add-hook 'prog-mode-hook 'supermaven-mode)
+
+;; Or enable globally
+(supermaven-global-mode 1)
+#+end_src
+
+** Keybindings
+
+| Key           | Function                            | Description           |
+|---------------+-------------------------------------+-----------------------|
+| ~TAB~         | ~supermaven-accept-completion~      | Accept full completion |
+| ~C-j~         | ~supermaven-accept-completion-by-word~ | Accept next word      |
+| ~C-g~ / ~ESC~ | ~supermaven-dismiss-completion~     | Dismiss completion    |
+| ~C-c s r~     | ~supermaven-restart~                | Restart Supermaven process |
+| ~C-c s s~     | ~supermaven-status~                 | Show process status   |
+
+** Commands
+
+*** Process Management
+- ~M-x supermaven-start~ - Start the Supermaven process
+- ~M-x supermaven-stop~ - Stop the Supermaven process
+- ~M-x supermaven-restart~ - Restart the Supermaven process
+- ~M-x supermaven-status~ - Show current process status
+
+*** Service Management
+- ~M-x supermaven-use-free~ - Switch to free tier
+- ~M-x supermaven-use-pro~ - Switch to pro tier (requires activation)
+- ~M-x supermaven-logout~ - Log out from Supermaven
+
+*** Logging
+- ~M-x supermaven-show-log~ - Display log buffer
+- ~M-x supermaven-toggle-log~ - Toggle log buffer visibility
+- ~M-x supermaven-clear-log~ - Clear log buffer
+
+* Configuration
+
+** Basic Configuration
+
+#+begin_src elisp
+;; Completion trigger delay (seconds)
+(setq supermaven-idle-delay 0.1)
+
+;; File types to ignore
+(setq supermaven-ignore-filetypes '("org" "txt" "md"))
+
+;; Log level (off, error, warn, info, debug, trace)
+(setq supermaven-log-level 'info)
+
+;; Auto-start when mode is enabled
+(setq supermaven-auto-start t)
+
+;; Disable automatic completion (manual only)
+(setq supermaven-idle-delay nil)
+#+end_src
+
+** Advanced Configuration
+
+#+begin_src elisp
+;; Custom completion triggers
+(setq supermaven-completion-triggers '("." "(" "[" "{" " " ":" "=" ")"))
+
+;; Minimum prefix length before triggering
+(setq supermaven-minimum-prefix-length 2)
+
+;; Maximum completion frequency (seconds between requests)
+(setq supermaven-max-completion-frequency 0.5)
+
+;; Custom predicates
+(setq supermaven-enable-predicates '(supermaven--buffer-changed))
+(setq supermaven-disable-predicates '(my-custom-disable-predicate))
+
+;; Appearance customization
+(setq supermaven-suggestion-face 'shadow)
+(setq supermaven-suggestion-color "#666666")
+#+end_src
+
+** Custom Keybindings
+
+#+begin_src elisp
+;; Customize completion keybindings
+(define-key supermaven-completion-map (kbd "C-<return>") #'supermaven-accept-completion)
+(define-key supermaven-completion-map (kbd "M-<right>") #'supermaven-accept-completion-by-word)
+(define-key supermaven-completion-map (kbd "C-c C-c") #'supermaven-dismiss-completion)
+#+end_src
+
+* Troubleshooting
+
+** No Completions Appearing
+
+1. Check if supermaven-mode is enabled: ~M-x supermaven-mode~
+2. Verify process status: ~M-x supermaven-status~
+3. Check logs: ~M-x supermaven-show-log~
+4. Ensure file type is not ignored in ~supermaven-ignore-filetypes~
+5. Verify ~supermaven-idle-delay~ is set to a positive number
+
+** Process Issues
+
+1. Check internet connection (required for binary download)
+2. Verify write permissions in data directory
+3. Try restarting: ~M-x supermaven-restart~
+4. Check logs for specific error messages
+
+** Common Log Messages
+
+- ~[INFO] Supermaven service tier: Free~ - Service is running
+- ~[ERROR] Failed to start Supermaven~ - Check binary download
+- ~[WARN] Binary not found, downloading...~ - Initial setup
+- ~[DEBUG] Completion request sent~ - Normal operation
+
+** Performance Issues
+
+If completions are too frequent or slow:
+#+begin_src elisp
+;; Increase delay
+(setq supermaven-idle-delay 0.3)
+
+;; Reduce frequency
+(setq supermaven-max-completion-frequency 1.0)
+#+end_src
+
+* License
+
+This project is licensed under the terms of the GNU General Public License version 3 (GPL-3.0). See the [[file:LICENSE][LICENSE]] file for details.
+
+* Acknowledgments
+
+- @crazywolf132 for the initial [[https://github.com/crazywolf132/supermaven.el][Supermaven.el]] implementation
+- Original Supermaven Neovim plugin developers
+- Supermaven team for the AI completion service
+- Emacs community for development resources
+- GitHub Copilot Emacs implementation for architectural reference
